@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>MapView with Solar Panels Data | ArcGIS JavaScript API</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/renderers/UniqueValueRenderer",
+        "esri/widgets/Legend",
+        "esri/widgets/LayerList",
+        "esri/Color"
+      ], (Map, MapView, FeatureLayer, UniqueValueRenderer, Legend, LayerList, Color) => {
+
+        // Creating the basic map with a "dark-gray" basemap
+        const map = new Map({
+          basemap: "dark-gray"
+        });
+
+        // Defining the view of the map
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          zoom: 15,
+          center: [-71.39, 41.83] // Longitude and latitude coordinates for the center
+        });
+
+        // Year Renderer Adjustment
+        // Added a unique value renderer (`yrRenderer`) to visually differentiate the years from 2011 to 2022
+        // Each year has a unique color to help distinguish the data points
+
+        // Defining colors for the years from 2011 to 2022
+        const colors = [
+          "#d92b30", "#3cccb4", "#ffdf3c", "#3498db", "#9b59b6", "#e67e22",
+          "#1abc9c", "#e74c3c", "#8e44ad", "#2ecc71", "#f1c40f", "#00ffff"
+        ];
+
+        // Unique value renderer to distinguish the years
+        const yrRenderer = new UniqueValueRenderer({
+          field: "year",
+          legendOptions: {
+            title: "Year of Installation"
+          },
+          uniqueValueInfos: [
+            { value: "2011", symbol: { type: "simple-fill", color: colors[0], outline: { width: 0 } }, label: "2011" },
+            { value: "2012", symbol: { type: "simple-fill", color: colors[1], outline: { width: 0 } }, label: "2012" },
+            { value: "2013", symbol: { type: "simple-fill", color: colors[2], outline: { width: 0 } }, label: "2013" },
+            { value: "2014", symbol: { type: "simple-fill", color: colors[3], outline: { width: 0 } }, label: "2014" },
+            { value: "2015", symbol: { type: "simple-fill", color: colors[4], outline: { width: 0 } }, label: "2015" },
+            { value: "2016", symbol: { type: "simple-fill", color: colors[5], outline: { width: 0 } }, label: "2016" },
+            { value: "2017", symbol: { type: "simple-fill", color: colors[6], outline: { width: 0 } }, label: "2017" },
+            { value: "2018", symbol: { type: "simple-fill", color: colors[7], outline: { width: 0 } }, label: "2018" },
+            { value: "2019", symbol: { type: "simple-fill", color: colors[8], outline: { width: 0 } }, label: "2019" },
+            { value: "2020", symbol: { type: "simple-fill", color: colors[9], outline: { width: 0 } }, label: "2020" },
+            { value: "2021", symbol: { type: "simple-fill", color: colors[10], outline: { width: 0 } }, label: "2021" },
+            { value: "2022", symbol: { type: "simple-fill", color: colors[11], outline: { width: 0 } }, label: "2022" }
+          ]
+        });
+
+        // Popup Template Adjustment
+        // Customized the popup template to include a bar chart (`column-chart`) for land cover classes
+        // Added `fieldInfos` for formatting key attributes (`data_built`, `solar_area`, and various land cover types)
+        // Followed the ArcGIS code structure for charts to ensure correct color assignment and proper configuration
+        
+        const popupTemplate = {
+          title: "Solar Panel in Providence",
+          // Field information to format and display relevant attributes
+          fieldInfos: [
+            {
+              fieldName: "data_built",
+              label: "Date Built",
+              visible: true,
+              format: {
+                dateFormat: "short-date"
+              }
+            },
+            {
+              fieldName: "solar_area",
+              label: "Solar Area",
+              visible: true,
+              format: {
+                digitSeparator: true,
+                places: 2
+              }
+            },
+            // Hidden fields for each land cover type to use in the chart
+            {
+              fieldName: "forest",
+              label: "Forest Area",
+              visible: false,
+              format: {
+                digitSeparator: true
+              }
+            },
+            {
+              fieldName: "wetland",
+              label: "Wetland Area",
+              visible: false,
+              format: {
+                digitSeparator: true
+              }
+            },
+            {
+              fieldName: "developed",
+              label: "Developed Area",
+              visible: false,
+              format: {
+                digitSeparator: true
+              }
+            },
+            {
+              fieldName: "water",
+              label: "Water Area",
+              visible: false,
+              format: {
+                digitSeparator: true
+              }
+            },
+            {
+              fieldName: "grassland",
+              label: "Grassland Area",
+              visible: false,
+              format: {
+                digitSeparator: true
+              }
+            },
+            {
+              fieldName: "unknown",
+              label: "Unknown Area",
+              visible: false,
+              format: {
+                digitSeparator: true
+              }
+            },
+            {
+              fieldName: "agricultur",
+              label: "Agriculture Area",
+              visible: false,
+              format: {
+                digitSeparator: true
+              }
+            },
+            {
+              fieldName: "snow",
+              label: "Snow Area",
+              visible: false,
+              format: {
+                digitSeparator: true
+              }
+            },
+            {
+              fieldName: "barren",
+              label: "Barren Area",
+              visible: false,
+              format: {
+                digitSeparator: true
+              }
+            }
+          ],
+          content: [
+            {
+              // Displays the fields configured above
+              type: "fields"
+            },
+            {
+              // Defines a media element to include a bar chart representing land cover classes
+              type: "media",
+              mediaInfos: [
+                {
+                  title: "<b>Land Cover Class Area</b>",
+                  type: "column-chart", // Vertical bar chart
+                  caption: "Area of LCMAP Land Cover Classes surrounding Solar Panel.",
+                  value: {
+                    fields: ["forest", "wetland", "developed", "water", "grassland", "unknown", "agricultur", "snow", "barren"],
+                    // Setting colors for each field to match their logical representation
+                    colors: [
+                      new Color("#006400"), // Forest - Dark Green
+                      new Color("#2E8B57"), // Wetland - Medium Green
+                      new Color("#A52A2A"), // Developed - Brown
+                      new Color("#1E90FF"), // Water - Blue
+                      new Color("#7CFC00"), // Grassland - Light Green
+                      new Color("#D3D3D3"), // Unknown - Light Grey
+                      new Color("#32CD32"), // Agriculture - Lime Green
+                      new Color("#FFFFFF"), // Snow - White
+                      new Color("#8B4513")  // Barren - Dark Brown
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        };
+
+        // Feature layer definition with unique value renderer and popup template
+        const featureLayer = new FeatureLayer({
+          portalItem: {
+            id: "a171604da3dc42b0befc156d8b23b9d5" // Portal item ID
+          },
+          renderer: yrRenderer, // Apply unique value renderer for years 2011 to 2022
+          popupTemplate: popupTemplate, // Attach popup template with the configured content and chart
+          outFields: ["*"] // Ensure all required fields are available
+        });
+
+        // Adding the feature layer to the map
+        map.add(featureLayer);
+
+        // Adding widgets once the view is ready
+        view.when(function () {
+          // Creating and adding the legend widget to the top-right
+          const legend = new Legend({
+            view: view,
+            layerInfos: [
+              {
+                layer: featureLayer,
+                title: "Year of Installation"
+              }
+            ]
+          });
+          view.ui.add(legend, "top-right");
+
+          // Creating and adding the layer list widget to the top-right
+          const layerList = new LayerList({
+            view: view
+          });
+          view.ui.add(layerList, "top-right");
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
